@@ -29,10 +29,10 @@ def write_to_file(proxies: list):
     :param proxies: list proxies as host:port pare
     :return:
     """
+    count = 1
     with open('proxies.txt', 'w') as file:
         for i in proxies:
-            print(i, file=file, sep="\n")
-
+                print(i, file=file, sep="\n")
     return 'Write comlete!'
 
 
