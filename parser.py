@@ -2,6 +2,8 @@ import requests
 import time
 from random import choice, uniform
 from bs4 import BeautifulSoup
+from .create_proxy_list_HTTPS import get_html, get_new_proxy, write_to_file, del_bad_proxy_from_list, proxy_upd
+from multiprocessing import Pool
 
 
 def proxy_changer():
@@ -11,6 +13,7 @@ def proxy_changer():
     """
     with open('/mnt/48D443B7D443A5D2/Users/Melnyk.D/OneDrive/MyProjects/Parser/fex.net/proxies.txt', 'r') as f:
         proxies = f.read().split('\n')
+        proxies.remove('')
 
     with open('/mnt/48D443B7D443A5D2/Users/Melnyk.D/OneDrive/MyProjects/Parser/fex.net/useragents.txt', 'r') as f:
         useragents = f.read().split('\n')
@@ -66,7 +69,7 @@ def main():
     token = 254002135060
     proxy, useragent = proxy_changer()
 
-    while token < 254002145092:
+    while token < 254002135100:
         url = f'https://fex.net/j_object_view/{token}'
         try:
             # Try to use proxy ip
@@ -78,6 +81,7 @@ def main():
 
         except requests.exceptions.ConnectionError as e:
             print(e.response)
+            del_bad_proxy_from_list(proxy.get('https').split('//')[1])
             proxy, useragent = proxy_changer()
             continue
 
