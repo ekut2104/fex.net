@@ -2,7 +2,7 @@ import requests
 import time
 from random import choice, uniform
 from bs4 import BeautifulSoup
-from .create_proxy_list_HTTPS import get_html, get_new_proxy, write_to_file, del_bad_proxy_from_list, proxy_upd
+from create_proxy_list_HTTPS import get_html, get_new_proxy, write_to_file, del_bad_proxy_from_list, proxy_upd
 from multiprocessing import Pool
 
 
@@ -28,7 +28,7 @@ def get_ip(html):
     Func for parsing http://sitespy.ru/my-ip.
     We parse our new ip ---> for monitor/control it
     :param html: html data from request http://sitespy.ru/my-ip
-    :return: None/ print uor new ip and User-Agent
+    :return: None/ print our new ip and User-Agent
     """
     soup = BeautifulSoup(html, 'lxml')
     ip = soup.find('span', class_='ip').text.strip()
@@ -69,7 +69,7 @@ def main():
     token = 254002135060
     proxy, useragent = proxy_changer()
 
-    while token < 254002135100:
+    while token < 254002140100:
         url = f'https://fex.net/j_object_view/{token}'
         try:
             # Try to use proxy ip
@@ -96,7 +96,7 @@ def main():
         elif respons_data.get('result') == 0:
             print(token, proxy, respons_data)
 
-        time.sleep(uniform(0, 0.5))
+        # time.sleep(uniform(0, 0.5))
         token += 1
 
 
