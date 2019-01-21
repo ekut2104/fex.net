@@ -1,6 +1,6 @@
 import requests
 import time
-from random import choice
+from random import choice, uniform
 from bs4 import BeautifulSoup
 
 
@@ -16,7 +16,7 @@ def proxy_changer():
         useragents = f.read().split('\n')
 
     useragent = {'User-Agent': choice(useragents)}
-    proxy = {'http': 'http://' + choice(proxies)}
+    proxy = {'https': 'https://' + choice(proxies)}
     return proxy, useragent
 
 
@@ -34,22 +34,47 @@ def get_ip(html):
     print(useragent)
 
 
+def test_ip_http(proxy, useragent):
+    url_test_ip = 'http://sitespy.ru/my-ip'
+    # Test our ip by parsing http://sitespy.ru/my-ip via HTTP
+    test_ip_r = requests.get(url_test_ip, headers=useragent, proxies=proxy)
+    respons_data_for_ip = test_ip_r.text
+    get_ip(respons_data_for_ip)
+
+
+def get_ip_https(html):
+    """
+    Func for parsing https://yandex.ua/internet/ru.
+    We parse our new ip ---> for monitor/control it
+    :param html:
+    :return:
+    """
+    soup = BeautifulSoup(html, 'lxml')
+    ip_https = soup.find('div', class_="client__desc").text.strip()
+    print('ip_https:', ip_https)
+
+
+def test_ip_https(proxy, useragent):
+    url_test_ip_https = 'https://yandex.ua/internet/ru'
+    # Test our ip by parsing https://yandex.ua/internet/ru via HTTPS
+    test_ip_https_r = requests.get(url_test_ip_https, headers=useragent, proxies=proxy)
+    respons_for_ip_https = test_ip_https_r.text
+    get_ip_https(respons_for_ip_https)
+
+
 def main():
     token = 254002135060
     proxy, useragent = proxy_changer()
 
     while token < 254002145092:
         url = f'https://fex.net/j_object_view/{token}'
-        url_test_ip = 'http://sitespy.ru/my-ip'
         try:
-            # Tyr to use proxy ip
+            # Try to use proxy ip
             r = requests.get(url, headers=useragent, proxies=proxy)
             respons_data = r.json()
 
-            # Test our ip by parsing http://sitespy.ru/my-ip
-            # test_ip_r = requests.get(url_test_ip, headers=useragent, proxies=proxy)
-            # respons_data_for_ip = test_ip_r.text
-            # get_ip(respons_data_for_ip)
+            # test_ip_http(proxy, useragent)
+            # test_ip_https(proxy, useragent)
 
         except requests.exceptions.ConnectionError as e:
             print(e.response)
@@ -67,7 +92,7 @@ def main():
         elif respons_data.get('result') == 0:
             print(token, proxy, respons_data)
 
-        # time.sleep(random.uniform(0, 1))
+        time.sleep(uniform(0, 0.5))
         token += 1
 
 
