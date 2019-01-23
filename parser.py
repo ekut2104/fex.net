@@ -2,7 +2,9 @@ import requests
 import time
 from random import choice, uniform
 from bs4 import BeautifulSoup
-from create_proxy_list_HTTPS import get_html, get_new_proxy, write_to_file, del_bad_proxy_from_list, proxy_upd
+from requests.exceptions import InvalidProxyURL
+
+from create_proxy_list_HTTPS import get_html, get_new_proxy, write_to_file, del_bad_proxy_from_list, proxy_upd, add_proxy_to_file
 from multiprocessing import Pool
 
 
@@ -13,7 +15,10 @@ def proxy_changer():
     """
     with open('/mnt/48D443B7D443A5D2/Users/Melnyk.D/OneDrive/MyProjects/Parser/fex.net/proxies.txt', 'r') as f:
         proxies = f.read().split('\n')
-        proxies.remove('')
+        try:
+            proxies.remove('')
+        except ValueError:
+            pass
 
     with open('/mnt/48D443B7D443A5D2/Users/Melnyk.D/OneDrive/MyProjects/Parser/fex.net/useragents.txt', 'r') as f:
         useragents = f.read().split('\n')
@@ -67,38 +72,54 @@ def test_ip_https(proxy, useragent):
 
 def main():
     token = 254002135060
-    proxy, useragent = proxy_changer()
 
     while token < 254002140100:
         url = f'https://fex.net/j_object_view/{token}'
+        proxy, useragent = proxy_changer()
+
         try:
             # Try to use proxy ip
             r = requests.get(url, headers=useragent, proxies=proxy)
             respons_data = r.json()
 
+            # if r.elapsed.total_seconds() > 5.0:
+            #     print(r.elapsed.total_seconds())
+            #     raise TimeoutError('respose elapsed time is over 5s')
+
             # test_ip_http(proxy, useragent)
             # test_ip_https(proxy, useragent)
 
+        except InvalidProxyURL as e:
+            print(e)
+            del_bad_proxy_from_list(proxy.get('https').split('//')[1])
+            continue
         except requests.exceptions.ConnectionError as e:
             print(e.response)
             del_bad_proxy_from_list(proxy.get('https').split('//')[1])
-            proxy, useragent = proxy_changer()
+            continue
+        except TimeoutError as e:
+            print(e)
+            del_bad_proxy_from_list(proxy.get('https').split('//')[1])
             continue
 
         if respons_data.get('result') == 1:
-            print(token, proxy,
-                  list(map(lambda x: [x.get('name'), x.get('upload_id'), x.get('size')],
-                           respons_data.get('upload_list'))))
+            with open('DB.txt', 'w') as f:
+                data = list(map(lambda x: [x.get('name'), x.get('upload_id'), x.get('size')], respons_data.get('upload_list')))
+                for l in data:
+                    load_url = f'https://fex.net/load/{token}/{l[1]}' + ' ' + f'{l[0]}' + ' ' + f'{l[2]}\n'
+                    f.write(load_url)
+            # print(token, list(map(lambda x: [x.get('name'), x.get('upload_id'), x.get('size')], respons_data.get('upload_list'))))
         elif respons_data.get('result') == 0 and respons_data.get('captcha') == 1:
-            print(token, proxy, respons_data)
-            proxy, useragent = proxy_changer()
+            # print(token, proxy, respons_data)
             continue
         elif respons_data.get('result') == 0:
-            print(token, proxy, respons_data)
+            # print(token, proxy, respons_data)
+            pass
 
         # time.sleep(uniform(0, 0.5))
         token += 1
 
 
 if __name__ == '__main__':
+    proxy_upd()
     main()

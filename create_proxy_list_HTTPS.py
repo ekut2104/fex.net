@@ -1,4 +1,5 @@
 import requests
+import os
 from bs4 import BeautifulSoup
 
 
@@ -16,9 +17,10 @@ def get_new_proxy(html: str) -> list:
     """
     proxies = []
     try:
-        with open('proxies.txt', 'r') as file:
+        with open(os.getcwd() + '/fex.net/proxies.txt', 'r') as file:
             proxies_in_file = file.read()
-    except FileNotFoundError:
+    except FileNotFoundError as e:
+        print(e)
         proxies_in_file = []
 
     soup = BeautifulSoup(html, 'lxml')
@@ -32,33 +34,30 @@ def get_new_proxy(html: str) -> list:
     return proxies
 
 
-def del_bad_proxy_from_list(proxy: str) -> list:
+def del_bad_proxy_from_list(proxy: str):
     """
     Func del input proxy from a list of proxies from file
     :param proxy: str - input data
-    :return: error or list of proxies
+    :return: None
     """
     try:
-        with open('proxies.txt', 'r') as file:
+        with open(os.getcwd() + '/fex.net/proxies.txt', 'r') as file:
             proxies_in_file = file.read().split('\n')
             if proxy in proxies_in_file:
                 proxies_in_file.remove(proxy)
+                write_to_file(proxies_in_file)
+                print('Bad proxy delete from proxy list')
 
-                return proxies_in_file
             else:
                 proxies_in_file.remove('')
-                if len(proxies_in_file) == 0:
-                    proxy_upd()
+                proxy_upd()
 
     except FileNotFoundError as e:
         print(e, 'Maybe, proxies.txt doesnot created yet')
-        proxies_in_file = []
-
-        return proxies_in_file
 
 
 def proxy_upd():
-    write_to_file(get_new_proxy(get_html()))
+    add_proxy_to_file(get_new_proxy(get_html()))
 
 
 def write_to_file(proxies: list):
@@ -67,12 +66,21 @@ def write_to_file(proxies: list):
     :param proxies: list proxies as host:port pare
     :return:
     """
-    with open('proxies.txt', 'a') as file:
+    with open(os.getcwd() + '/fex.net/proxies.txt', 'w') as file:
         for i in proxies:
             file.write(f'{i}\n')
 
     print('Write comlete!')
 
 
+def add_proxy_to_file(proxies: list):
+    with open(os.getcwd() + '/fex.net/proxies.txt', 'a') as file:
+        for i in proxies:
+            file.write(f'{i}\n')
+
+    print('Adding comlete!')
+
+
 if __name__ == '__main__':
     proxy_upd()
+    del_bad_proxy_from_list('196.27.115.138:48322')
