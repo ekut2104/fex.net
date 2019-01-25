@@ -1,10 +1,11 @@
 import requests
+import os
 import time
 from random import choice, uniform
 from bs4 import BeautifulSoup
 from requests.exceptions import InvalidProxyURL
-
-from create_proxy_list_HTTPS import get_html, get_new_proxy, write_to_file, del_bad_proxy_from_list, proxy_upd, add_proxy_to_file
+from create_proxy_list_HTTPS import get_html, get_new_proxy, write_to_file, del_bad_proxy_from_list, proxy_upd, \
+    add_proxy_to_file
 from multiprocessing import Pool
 
 
@@ -13,19 +14,23 @@ def proxy_changer():
     Func use data from files and generate random combination of proxy and User-Agent
     :return: random combination proxy and useragent
     """
-    with open('/mnt/48D443B7D443A5D2/Users/Melnyk.D/OneDrive/MyProjects/Parser/fex.net/proxies.txt', 'r') as f:
+    with open(os.getcwd() + '/fex.net/proxies.txt', 'r') as f:
         proxies = f.read().split('\n')
         try:
             proxies.remove('')
         except ValueError:
             pass
 
-    with open('/mnt/48D443B7D443A5D2/Users/Melnyk.D/OneDrive/MyProjects/Parser/fex.net/useragents.txt', 'r') as f:
+    with open(os.getcwd() + '/fex.net/useragents.txt', 'r') as f:
         useragents = f.read().split('\n')
 
-    useragent = {'User-Agent': choice(useragents)}
-    proxy = {'https': 'https://' + choice(proxies)}
-    return proxy, useragent
+    return proxies, useragents
+
+
+def get_token():
+    with open(os.getcwd() + '/DB.txt', 'r') as f:
+        last_line = f.readlines()[-1].split(' ')[0]
+        return int(last_line)
 
 
 def get_ip(html):
@@ -70,56 +75,57 @@ def test_ip_https(proxy, useragent):
     get_ip_https(respons_for_ip_https)
 
 
-def main():
-    token = 254002135060
-
-    while token < 254002140100:
+def main(token, proxies_list, useragent_list):
+    while token < 254009000000:
+        print(token)
         url = f'https://fex.net/j_object_view/{token}'
-        proxy, useragent = proxy_changer()
+        useragent = {'User-Agent': choice(useragent_list)}
+        proxy = {'https': 'https://' + choice(proxies_list)}
 
         try:
             # Try to use proxy ip
-            r = requests.get(url, headers=useragent, proxies=proxy)
+            r = requests.get(url, headers=useragent, proxies=proxy, timeout=2)
             respons_data = r.json()
 
-            # if r.elapsed.total_seconds() > 5.0:
-            #     print(r.elapsed.total_seconds())
-            #     raise TimeoutError('respose elapsed time is over 5s')
+            if r.elapsed.total_seconds() > 5.0:
+                print(r.elapsed.total_seconds())
+                raise TimeoutError('respose elapsed time is over 5s')
 
             # test_ip_http(proxy, useragent)
             # test_ip_https(proxy, useragent)
 
         except InvalidProxyURL as e:
-            print(e)
-            del_bad_proxy_from_list(proxy.get('https').split('//')[1])
+            # print(e)
+            proxies_list.remove(proxy.get('https').split('//')[1])
             continue
-        except requests.exceptions.ConnectionError as e:
-            print(e.response)
-            del_bad_proxy_from_list(proxy.get('https').split('//')[1])
+        except requests.exceptions.ConnectionError:
+            # print('Cannot connect to proxy.')
+            proxies_list.remove(proxy.get('https').split('//')[1])
             continue
         except TimeoutError as e:
-            print(e)
-            del_bad_proxy_from_list(proxy.get('https').split('//')[1])
+            # print(e)
+            proxies_list.remove(proxy.get('https').split('//')[1])
             continue
 
         if respons_data.get('result') == 1:
             with open('DB.txt', 'w') as f:
-                data = list(map(lambda x: [x.get('name'), x.get('upload_id'), x.get('size')], respons_data.get('upload_list')))
+                data = list(
+                    map(lambda x: [x.get('name'), x.get('upload_id'), x.get('size')], respons_data.get('upload_list')))
                 for l in data:
-                    load_url = f'https://fex.net/load/{token}/{l[1]}' + ' ' + f'{l[0]}' + ' ' + f'{l[2]}\n'
+                    load_url = f'{token}' + ' ' + f'https://fex.net/load/{token}/{l[1]}' + ' ' + f'{l[0]}' + ' ' + f'{l[2]}\n'
                     f.write(load_url)
-            # print(token, list(map(lambda x: [x.get('name'), x.get('upload_id'), x.get('size')], respons_data.get('upload_list'))))
         elif respons_data.get('result') == 0 and respons_data.get('captcha') == 1:
-            # print(token, proxy, respons_data)
+            print(token, proxy, respons_data)
+            print('FEX.NET - detect us. We need to update proxybase, and continue about some time')
             continue
-        elif respons_data.get('result') == 0:
-            # print(token, proxy, respons_data)
-            pass
+        # elif respons_data.get('result') == 0:
+        #     print(token, proxy, respons_data)
 
         # time.sleep(uniform(0, 0.5))
         token += 1
 
 
 if __name__ == '__main__':
-    proxy_upd()
-    main()
+    proxies_list, useragent_list = proxy_changer()
+    token = get_token()
+    main(token, proxies_list, useragent_list)

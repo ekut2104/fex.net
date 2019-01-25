@@ -83,4 +83,3 @@ def add_proxy_to_file(proxies: list):
 
 if __name__ == '__main__':
     proxy_upd()
-    del_bad_proxy_from_list('196.27.115.138:48322')
