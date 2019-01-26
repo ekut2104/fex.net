@@ -4,12 +4,14 @@ import time
 from random import choice, uniform
 from bs4 import BeautifulSoup
 from requests.exceptions import InvalidProxyURL
-from create_proxy_list_HTTPS import get_html, get_new_proxy, write_to_file, del_bad_proxy_from_list, proxy_upd, \
-    add_proxy_to_file
-from multiprocessing import Pool
 
 
-def proxy_changer():
+# from create_proxy_list_HTTPS import get_html, get_new_proxy, write_to_file, del_bad_proxy_from_list, proxy_upd, \
+#     add_proxy_to_file
+# from multiprocessing import Pool
+
+
+def get_list_proxy():
     """
     Func use data from files and generate random combination of proxy and User-Agent
     :return: random combination proxy and useragent
@@ -77,38 +79,33 @@ def test_ip_https(proxy, useragent):
 
 def main(token, proxies_list, useragent_list):
     while token < 254009000000:
-        print(token)
+        print('token:', token)
         url = f'https://fex.net/j_object_view/{token}'
         useragent = {'User-Agent': choice(useragent_list)}
         proxy = {'https': 'https://' + choice(proxies_list)}
 
         try:
-            # Try to use proxy ip
             r = requests.get(url, headers=useragent, proxies=proxy, timeout=2)
             respons_data = r.json()
 
             if r.elapsed.total_seconds() > 5.0:
-                print(r.elapsed.total_seconds())
                 raise TimeoutError('respose elapsed time is over 5s')
 
             # test_ip_http(proxy, useragent)
             # test_ip_https(proxy, useragent)
 
-        except InvalidProxyURL as e:
-            # print(e)
+        except InvalidProxyURL:
             proxies_list.remove(proxy.get('https').split('//')[1])
             continue
         except requests.exceptions.ConnectionError:
-            # print('Cannot connect to proxy.')
             proxies_list.remove(proxy.get('https').split('//')[1])
             continue
-        except TimeoutError as e:
-            # print(e)
+        except TimeoutError:
             proxies_list.remove(proxy.get('https').split('//')[1])
             continue
 
         if respons_data.get('result') == 1:
-            with open('DB.txt', 'w') as f:
+            with open('DB.txt', 'a') as f:
                 data = list(
                     map(lambda x: [x.get('name'), x.get('upload_id'), x.get('size')], respons_data.get('upload_list')))
                 for l in data:
@@ -118,14 +115,15 @@ def main(token, proxies_list, useragent_list):
             print(token, proxy, respons_data)
             print('FEX.NET - detect us. We need to update proxybase, and continue about some time')
             continue
-        # elif respons_data.get('result') == 0:
-        #     print(token, proxy, respons_data)
-
-        # time.sleep(uniform(0, 0.5))
         token += 1
 
 
 if __name__ == '__main__':
-    proxies_list, useragent_list = proxy_changer()
+    proxies_list, useragent_list = get_list_proxy()
     token = get_token()
-    main(token, proxies_list, useragent_list)
+    try:
+        main(token, proxies_list, useragent_list)
+    except:
+        with open(os.getcwd() + '/fex.net/proxies.txt', 'w') as f:
+            for i in proxies_list:
+                f.write(f'{i}\n')

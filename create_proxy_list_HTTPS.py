@@ -17,7 +17,7 @@ def get_new_proxy(html: str) -> list:
     """
     proxies = []
     try:
-        with open(os.getcwd() + '/fex.net/proxies.txt', 'r') as file:
+        with open(os.getcwd() + '/proxies.txt', 'r') as file:
             proxies_in_file = file.read()
     except FileNotFoundError as e:
         print(e)
@@ -34,47 +34,47 @@ def get_new_proxy(html: str) -> list:
     return proxies
 
 
-def del_bad_proxy_from_list(proxy: str):
-    """
-    Func del input proxy from a list of proxies from file
-    :param proxy: str - input data
-    :return: None
-    """
-    try:
-        with open(os.getcwd() + '/fex.net/proxies.txt', 'r') as file:
-            proxies_in_file = file.read().split('\n')
-            if proxy in proxies_in_file:
-                proxies_in_file.remove(proxy)
-                write_to_file(proxies_in_file)
-                print('Bad proxy delete from proxy list')
-
-            else:
-                proxies_in_file.remove('')
-                proxy_upd()
-
-    except FileNotFoundError as e:
-        print(e, 'Maybe, proxies.txt doesnot created yet')
-
-
-def proxy_upd():
-    add_proxy_to_file(get_new_proxy(get_html()))
+# def del_bad_proxy_from_list(proxy: str):
+#     """
+#     Func del input proxy from a list of proxies from file
+#     :param proxy: str - input data
+#     :return: None
+#     """
+#     try:
+#         with open(os.getcwd() + '/proxies.txt', 'r') as file:
+#             proxies_in_file = file.read().split('\n')
+#             if proxy in proxies_in_file:
+#                 proxies_in_file.remove(proxy)
+#                 write_to_file(proxies_in_file)
+#                 print('Bad proxy delete from proxy list')
+#
+#             else:
+#                 proxies_in_file.remove('')
+#                 add_proxy_to_file(get_new_proxy(get_html()))
+#
+#     except FileNotFoundError as e:
+#         print(e, 'Maybe, proxies.txt doesnot created yet')
 
 
-def write_to_file(proxies: list):
-    """
-    Write input list of proxies into file
-    :param proxies: list proxies as host:port pare
-    :return:
-    """
-    with open(os.getcwd() + '/fex.net/proxies.txt', 'w') as file:
-        for i in proxies:
-            file.write(f'{i}\n')
+# def proxy_upd():
+#     add_proxy_to_file(get_new_proxy(get_html()))
 
-    print('Write comlete!')
+
+# def write_to_file(proxies: list):
+#     """
+#     Write input list of proxies into file
+#     :param proxies: list proxies as host:port pare
+#     :return:
+#     """
+#     with open(os.getcwd() + '/proxies.txt', 'w') as file:
+#         for i in proxies:
+#             file.write(f'{i}\n')
+#
+#     print('Write comlete!')
 
 
 def add_proxy_to_file(proxies: list):
-    with open(os.getcwd() + '/fex.net/proxies.txt', 'a') as file:
+    with open(os.getcwd() + '/proxies.txt', 'a') as file:
         for i in proxies:
             file.write(f'{i}\n')
 
@@ -82,4 +82,6 @@ def add_proxy_to_file(proxies: list):
 
 
 if __name__ == '__main__':
-    proxy_upd()
+    add_proxy_to_file(get_new_proxy(get_html()))
+
+
